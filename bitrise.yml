@@ -9,7 +9,7 @@ app:
   - BITRISE_STEP_ID: apptestai-test
   - BITRISE_STEP_VERSION: "0.0.1"
   - BITRISE_STEP_GIT_CLONE_URL: https://github.com/forcemax/bitrise-step-apptestai-test.git
-  - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
+  - MY_STEPLIB_REPO_FORK_GIT_URL: https://github.com/forcemax/bitrise-steplib
 
 workflows:
   test:
