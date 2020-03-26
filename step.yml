@@ -17,8 +17,7 @@ description: |
   Input your apptest.ai Access Key, Project ID, Package file
   refer to more information from https://app.apptest.ai/#/main/integrations
 
-  Setup Access Key using workflow Secrets : APPTEST_AI_ACCESS_KEY
-
+  We recommend to use Access Key using bitrise workflow secret variable.
 website: https://github.com/forcemax/bitrise-step-apptestai-test
 source_code_url: https://github.com/forcemax/bitrise-step-apptestai-test
 support_url: https://github.com/forcemax/bitrise-step-apptestai-test/issues
@@ -78,7 +77,7 @@ inputs:
       is_expand: true
       is_required: true
 
-  - binary_path: app-release.apk
+  - binary_path: app/build/outputs/apk/release/app-prod-release.apk
     opts:
       title: "package file path. supported file type: apk,ipa,xapk"
       is_expand: true
