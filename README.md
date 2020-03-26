@@ -9,7 +9,7 @@ refer to more information from https://app.apptest.ai/#/main/integrations
 
 **Required** apptest.ai Access Key, Project ID, Package file.
 
-Setup Access Key using bitrise workflow secret variable : APPTEST_AI_ACCESS_KEY
+We recommend to use Access Key using bitrise workflow secret variable.
 
 ### Example usage
 This is the example to using bitrise workflow bitrise.yml<br />
@@ -18,7 +18,7 @@ Please change to the your input.
 ```yaml
     - apptestai-test@0.0.1:
       inputs:
-        - access_key: "$APPTEST_AI_ACCESS_KEY"
+        - access_key: "ci_support:4b55ec5999ea636b0aafb402816ac50b"
         - project_id: "1111"
         - binary_path: "app/build/outputs/apk/prod/release/app-prod-release.apk"
 ```

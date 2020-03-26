@@ -65,22 +65,22 @@ toolkit:
 
 
 inputs:
-  - access_key: $APPTEST_AI_ACCESS_KEY
+  - access_key: ci_support:4b55ec5999ea636b0aafb402816ac50b
     opts:
-      title: "apptest.ai access key (userid:accesskey). must set APPTEST_AI_ACCESS_KEY env to Secrets on Workflow Editor."
+      title: "apptest.ai access key (userid:accesskey)."
       is_sensitive: true
       is_expand: true
       is_required: true
 
   - project_id: 12389
     opts:
-      title: "apptest.ai project id"
+      title: "apptest.ai project id."
       is_expand: true
       is_required: true
 
   - binary_path: app-release.apk
     opts:
-      title: "package file path"
+      title: "package file path. supported file type: apk,ipa,xapk"
       is_expand: true
       is_required: true
 
