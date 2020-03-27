@@ -16,7 +16,7 @@ This is the example to using bitrise workflow bitrise.yml<br />
 Please change to the your input.
 
 ```yaml
-    - apptestai-test@0.0.1:
+    - apptestai-test@0.0.3:
       inputs:
         - access_key: "ci_support:4b55ec5999ea636b0aafb402816ac50b"
         - project_id: "1111"

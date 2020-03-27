@@ -64,22 +64,25 @@ toolkit:
 
 
 inputs:
-  - access_key: ci_support:4b55ec5999ea636b0aafb402816ac50b
+  - access_key:
     opts:
-      title: "apptest.ai access key (userid:accesskey)."
+      title: "apptest.ai access key."
+      description: "apptest.ai access key. (e.g.: ci_support:4b55ec5999ea636b0aafb402816ac50b)"
       is_sensitive: true
       is_expand: true
       is_required: true
 
-  - project_id: 12389
+  - project_id:
     opts:
       title: "apptest.ai project id."
+      description: apptest.ai project id. (e.g. 19049)
       is_expand: true
       is_required: true
 
-  - binary_path: app/build/outputs/apk/release/app-prod-release.apk
+  - binary_path: $BITRISE_APK_PATH 
     opts:
-      title: "package file path. supported file type: apk,ipa,xapk"
+      title: "package file path."
+      description: "package file path. You can use $BITRISE_APK_PATH or $BITRISE_IPA_PATH or app file path. supported file type: apk,ipa,xapk"
       is_expand: true
       is_required: true
 
