@@ -86,3 +86,46 @@ inputs:
       is_expand: true
       is_required: true
 
+  - testset_name: $BITRISE_GIT_MESSAGE
+    opts:
+      title: 'test set name.'
+      description: 'test set name (default: github commit message).'
+      is_expand: true
+      is_required: false
+  
+  - time_limit: 5
+    opts:
+      title: 'Test time limit (minutes)'
+      description: 'Test time limit (minutes) (range: 5 - 30). If the value is empty, it follows the time-limit saved in the project.'
+      is_expand: true
+      is_required: false
+
+  - use_vo: false
+    opts:
+      title: 'Whether AT&T Video Optimizer(ARO) is used'
+      description: 'Whether AT&T Video Optimizer(ARO) is used. (true|false) (default: false)'
+      is_expand: true
+      is_required: false
+
+  - callback:
+    opts:
+      title: 'Callback URL to be called after test completion.'
+      description: 'Callback URL to be called after test completion.'
+      is_expand: true
+      is_required: false
+
+  - login_id:
+    opts:
+      title: 'ID of the test account required to test the app.'
+      description: 'ID of the test account required to test the app. If the value is empty, it follows the time-limit saved in the project.'
+      is_sensitive: true
+      is_expand: true
+      is_required: false
+
+  - login_id:
+    opts:
+      title: 'Password of the test account required to test the app.'
+      description: 'Password of the test account required to test the app. If the value is empty, it follows the time-limit saved in the project.'
+      is_sensitive: true
+      is_expand: true
+      is_required: false

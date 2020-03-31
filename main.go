@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -39,37 +40,61 @@ type testResult struct {
 	TestSuites testSuites `json:"testsuites"`
 }
 
-// for json response
-type sData struct {
-	TestCount  int    `json:"test_count"`
-	TsID       int    `json:"tsid"`
+type structDataOfExecuteTest struct {
+	TestCount int `json:"test_count"`
+	TestsetID int `json:"testset_id"`
+}
+type structExecuteTest struct {
+	Data       structDataOfExecuteTest `json:"data"`
+	Reason     string                  `json:"reason"`
+	ResultCode int                     `json:"result_code"`
+	ResultMsg  string                  `json:"result_msg"`
+}
+
+type structTestsetStatusDetail struct {
+	ErrorCnt        int `json:"error_cnt"`
+	FailCnt         int `json:"fail_cnt"`
+	InitializingCnt int `json:"initializing_cnt"`
+	PassCnt         int `json:"pass_cnt"`
+	RunningCnt      int `json:"running_cnt"`
+	StopCnt         int `json:"stop_cnt"`
+	TotalTestCnt    int `json:"total_test_cnt"`
+}
+type structDataOfCheckComplete struct {
+	ResponseTime        string                    `json:"response_time"`
+	TestsetStatusDetail structTestsetStatusDetail `json:"testset_status_detail"`
+	TestsetStatus       string                    `json:"testset_status"`
+}
+type structCheckComplete struct {
+	Data       structDataOfCheckComplete `json:"data"`
+	Reason     string                    `json:"reason"`
+	ResultCode int                       `json:"result_code"`
+	ResultMsg  string                    `json:"result_msg"`
+}
+
+type structDataOfGetTestResult struct {
+	Complete   bool   `json:"complete"`
+	ResultHTML string `json:"result_html"`
 	ResultJSON string `json:"result_json"`
 	ResultXML  string `json:"result_xml"`
-	ResultHTML string `json:"result_html"`
+}
+type structGetTestResult struct {
+	Data       structDataOfGetTestResult `json:"data"`
+	Reason     string                    `json:"reason"`
+	ResultCode int                       `json:"result_code"`
+	ResultMsg  string                    `json:"result_msg"`
 }
 
-// for test/run json response
-// {
-// 	data: { test_count: 3, tsid: 799632 },
-// 	errorCode: 0,
-// 	reason: '',
-// 	result: 'ok'
-// }
-type executeTestResult struct {
-	Data      sData  `json:"data"`
-	ErrorCode int    `json:"errorCode"`
-	Reason    string `json:"reason"`
-	Result    string `json:"result"`
+type structCredentials struct {
+	LoginID string `json:"login_id"`
+	LoginPW string `json:"login_pw"`
 }
-
-// for check finish json response
-// { complete: false, data: {}, errorCode: 0, reason: '', result: 'ok' }
-type checkCompleteResult struct {
-	Complete  bool   `json:"complete"`
-	Data      sData  `json:"data"`
-	ErrorCode int    `json:"errorCode"`
-	Reason    string `json:"reason"`
-	Result    string `json:"result"`
+type structParams struct {
+	TestsetName string            `json:"testset_name"`
+	TimeLimit   int               `json:"time_limit"`
+	UseVO       bool              `json:"use_vo"`
+	Callback    string            `json:"callback"`
+	Credentials structCredentials `json:"credentials"`
 }
 
 // for color print
@@ -91,8 +116,7 @@ func color(colorString string) func(...interface{}) string {
 	return sprint
 }
 
-// params map[string]string,
-func multipartRequest(uri string, params string, paramName, path string) (*http.Request, error) {
+func multipartRequest(uri string, data string, paramName, path string) (*http.Request, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -111,10 +135,7 @@ func multipartRequest(uri string, params string, paramName, path string) (*http.
 	}
 	io.Copy(part, file)
 
-	_ = writer.WriteField("data", params)
-	// for key, val := range params {
-	// 	_ = writer.WriteField(key, val)
-	// }
+	_ = writer.WriteField("data", data)
 	err = writer.Close()
 	if err != nil {
 		return nil, err
@@ -125,15 +146,25 @@ func multipartRequest(uri string, params string, paramName, path string) (*http.
 	return request, err
 }
 
-func executeTest(accesskey string, projectid string, packagefile string, testsetname string) (bodyContent string) {
+func executeTest(accesskey string, projectid string, packagefile string, params structParams) (bodyContent string) {
 	authToken := strings.Split(accesskey, ":")
-	params := "{\"pid\":" + projectid + ", \"test_set_name\":\"" + testsetname + "\"}"
-	// extraParams := map[string]string{
-	// 	"title":       "My Document",
-	// 	"author":      "Matt Aimonetti",
-	// 	"description": "A document with all the Go programming language secrets",
-	// }
-	request, err := multipartRequest("https://api.apptest.ai/openapi/v1/test/run", params, "apk_file", packagefile)
+	var data = ""
+	data += "{\"pid\": " + projectid
+	data += ", \"testset_name\": \"" + params.TestsetName + "\""
+	if params.TimeLimit >= 5 && params.TimeLimit <= 30 {
+		data += ", \"time_limit\": " + strconv.Itoa(params.TimeLimit)
+	}
+	data += ", \"use_vo\": " + strconv.FormatBool(params.UseVO)
+	if len(params.Callback) > 0 {
+		data += ", \"callback\": " + params.Callback
+	}
+	if len(params.Credentials.LoginID) > 0 && len(params.Credentials.LoginPW) > 0 {
+		data += ", \"credentials\": { \"login_id\": \"" + params.Credentials.LoginID + "\", \"login_pw\": \"" + params.Credentials.LoginPW + "\"}"
+	}
+	data += "}"
+
+	// data := "{\"pid\":" + projectid + ", \"test_set_name\":\"" + testsetname + "\"}"
+	request, err := multipartRequest("https://api.apptest.ai/openapi/v2/testset", data, "app_file", packagefile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -154,9 +185,9 @@ func executeTest(accesskey string, projectid string, packagefile string, testset
 	}
 }
 
-func checkComplete(accesskey string, projectid string, tsID string) (bodyContent string) {
+func checkComplete(accesskey string, tsID string) (bodyContent string) {
 	authToken := strings.Split(accesskey, ":")
-	url := "https://api.apptest.ai/openapi/v1/project/" + projectid + "/testset/" + tsID + "/result/all"
+	url := "https://api.apptest.ai/openapi/v2/testset/" + tsID
 
 	request, _ := http.NewRequest("GET", url, nil)
 	request.SetBasicAuth(authToken[0], authToken[1])
@@ -165,10 +196,10 @@ func checkComplete(accesskey string, projectid string, tsID string) (bodyContent
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Fatal(err)
-		panic("Check finish failed.")
+		panic("Check complete failed.")
 	} else {
 		if resp.StatusCode != 200 {
-			panic("Check finish failed : HTTP status code " + fmt.Sprintf("%d", resp.StatusCode))
+			panic("Check complete failed : HTTP status code " + fmt.Sprintf("%d", resp.StatusCode))
 		} else {
 			body, _ := ioutil.ReadAll(resp.Body)
 			return string(body)
@@ -176,9 +207,9 @@ func checkComplete(accesskey string, projectid string, tsID string) (bodyContent
 	}
 }
 
-func getTestResult(accesskey string, projectid string, tsID string) (bodyContent string) {
+func getTestResult(accesskey string, tsID string) (bodyContent string) {
 	authToken := strings.Split(accesskey, ":")
-	url := "https://api.apptest.ai/openapi/v1/project/" + projectid + "/testset/" + tsID + "/result/all"
+	url := "https://api.apptest.ai/openapi/v2/testset/" + tsID + "/result"
 
 	request, _ := http.NewRequest("GET", url, nil)
 	request.SetBasicAuth(authToken[0], authToken[1])
@@ -190,7 +221,7 @@ func getTestResult(accesskey string, projectid string, tsID string) (bodyContent
 		panic("Get result failed.")
 	} else {
 		if resp.StatusCode != 200 {
-			panic("Get result failed : HTTP status code : " + fmt.Sprintf("%d", resp.StatusCode))
+			panic("Get result failed : HTTP status code " + fmt.Sprintf("%d", resp.StatusCode))
 		} else {
 			body, _ := ioutil.ReadAll(resp.Body)
 			return string(body)
@@ -290,6 +321,21 @@ func main() {
 	projectid := os.Getenv("project_id")
 	binarypath := os.Getenv("binary_path")
 
+	testsetname := os.Getenv("testset_name")
+	timelimit, err := strconv.Atoi(os.Getenv("time_limit"))
+	if err != nil {
+		fmt.Println("time_limit value is invalid. follows the time-limit saved in the project.")
+		timelimit = 0
+	}
+	usevo, err := strconv.ParseBool(os.Getenv("use_vo"))
+	if err != nil {
+		fmt.Println("use_vo value is invalid. use_vo set default value(false).")
+		usevo = false
+	}
+	callback := os.Getenv("callback")
+	loginid := os.Getenv("login_id")
+	loginpw := os.Getenv("login_pw")
+
 	if len(accesskey) == 0 {
 		panic("access_key is required parameter.")
 	}
@@ -310,7 +356,6 @@ func main() {
 		panic("binary_path file not exists.")
 	}
 
-	testsetname := os.Getenv("test_set_name")
 	if len(testsetname) == 0 {
 		testsetname = os.Getenv("BITRISE_GIT_MESSAGE")
 		if len(testsetname) != 0 {
@@ -318,22 +363,32 @@ func main() {
 		} else {
 			testsetname = os.Getenv("BITRISE_GIT_COMMIT")
 		}
+		if len(testsetname) != 0 {
+			testsetname = "no commit message"
+		}
 	}
 
-	// var tsID string
-	responseBody := executeTest(accesskey, projectid, binarypath, testsetname)
+	var params structParams
+	params.TestsetName = testsetname
+	params.TimeLimit = timelimit
+	params.UseVO = usevo
+	params.Callback = callback
+	params.Credentials.LoginID = loginid
+	params.Credentials.LoginPW = loginpw
+
+	responseBody := executeTest(accesskey, projectid, binarypath, params)
 	if len(responseBody) == 0 {
 		panic("Test initiation failed: no response.")
 	}
-	var ret executeTestResult
+	var ret structExecuteTest
 	if err := json.Unmarshal([]byte(responseBody), &ret); err != nil {
 		panic("Test initiation failed: " + string(err.Error()))
 	}
 
-	if ret.Data.TsID == 0 {
+	if ret.Data.TestsetID == 0 {
 		panic("Test initialize failed: invalid response.")
 	}
-	tsID := fmt.Sprintf("%d", ret.Data.TsID)
+	tsID := fmt.Sprintf("%d", ret.Data.TestsetID)
 	fmt.Println("Test initiated.")
 
 	stepCount := 0
@@ -342,20 +397,20 @@ func main() {
 		stepCount++
 		fmt.Println("Test is progressing... " + fmt.Sprintf("%d", stepCount*15) + "sec.")
 
-		responseBody := checkComplete(accesskey, projectid, tsID)
+		responseBody := checkComplete(accesskey, tsID)
 		if len(responseBody) == 0 {
 			panic("Test progress check failed : no response")
 		}
-		var ret checkCompleteResult
+		var ret structCheckComplete
 		if err := json.Unmarshal([]byte(responseBody), &ret); err != nil {
 			panic("Test progress check failed: " + string(err.Error()))
 		}
-		if ret.Complete == true {
-			responseBody := getTestResult(accesskey, projectid, tsID)
+		if ret.Data.TestsetStatus == "Complete" {
+			responseBody := getTestResult(accesskey, tsID)
 			if len(responseBody) == 0 {
 				panic("Test result get failed : no response")
 			}
-			var ret checkCompleteResult
+			var ret structGetTestResult
 			if err := json.Unmarshal([]byte(responseBody), &ret); err != nil {
 				panic("Test result get failed: " + string(err.Error()))
 			}
