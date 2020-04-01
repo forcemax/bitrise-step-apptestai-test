@@ -156,7 +156,7 @@ func executeTest(accesskey string, projectid string, packagefile string, params 
 	}
 	data += ", \"use_vo\": " + strconv.FormatBool(params.UseVO)
 	if len(params.Callback) > 0 {
-		data += ", \"callback\": " + params.Callback
+		data += ", \"callback\": \"" + params.Callback + "\""
 	}
 	if len(params.Credentials.LoginID) > 0 && len(params.Credentials.LoginPW) > 0 {
 		data += ", \"credentials\": { \"login_id\": \"" + params.Credentials.LoginID + "\", \"login_pw\": \"" + params.Credentials.LoginPW + "\"}"
