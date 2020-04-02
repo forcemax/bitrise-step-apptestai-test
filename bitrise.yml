@@ -42,6 +42,10 @@ workflows:
         - access_key: "${APPTEST_AI_ACCESS_KEY}"
         - project_id: "1111"
         - binary_path: "app-release.apk"
+        - use_vo: false
+        - time_limit: 5
+        - login_id: "example_id"
+        - login_pw: "example_pw"
     - script:
         inputs:
         - content: |

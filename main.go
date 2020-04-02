@@ -363,7 +363,7 @@ func main() {
 		} else {
 			testsetname = os.Getenv("BITRISE_GIT_COMMIT")
 		}
-		if len(testsetname) != 0 {
+		if len(testsetname) == 0 {
 			testsetname = "no commit message"
 		}
 	}
